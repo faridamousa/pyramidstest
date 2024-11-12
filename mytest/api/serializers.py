@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Medicine, RefillRequest, User
+from django.contrib.auth.models import User
 
 class MedicineSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,16 +10,24 @@ class MedicineSerializer(serializers.ModelSerializer):
 
 
 class RefillSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
-    medicine = serializers.StringRelatedField()
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all()) 
+    medicine = serializers.PrimaryKeyRelatedField(queryset=Medicine.objects.all())  
     class Meta:
         model = RefillRequest
-        fields = ('id', 'user', 'medicine', 
-                  'quantity','created_at')
+        fields = ('id', 'user', 'medicine', 'created_at')
+
+
+class RefillCountSerializer(serializers.Serializer):
+    medicine_name = serializers.CharField(source='medicine__name')
+    refill_count = serializers.IntegerField()
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'name', 'email', 
+        fields = ('id', 'username', "email",
                   'password','created_at')
+
+    def create(self, validated_data):
+        user = User.objects.create_user(**validated_data)
+        return user
